@@ -40,6 +40,49 @@ Otherwise, use the format:
 
 "`;
 
+const TONE_USER_PROMPT =
+    `Analyze the following text for emotional tone and list 0-3 sentences that should be rephrased to better match the desired emotional tone.
+    If there are no revisions to the draft, please respond:
+    {
+        "response": "no revisions needed"
+    }
+    Otherwise, use the format:
+    {
+        "response": {
+            "1": {
+                "quote": "quote from text",
+                "revision": "revised version"
+            },
+            "2": {
+                ...
+            },
+            ...
+        }
+    }
+    Desired Tone: `;
+
+const FACT_CHECK_USER_PROMPT =
+    `Analyze the following text for factual accuracy and list 0-3 sentences that should be revised.
+    If there are no factual inaccuracies, please respond:
+    {
+        "response": "no revisions needed"
+    }
+    Otherwise, use the format:
+    {
+        "response": {
+            "1": {
+                "quote": "quote from text",
+                "revision": "revised version"
+            },
+            "2": {
+                ...
+            },
+            ...
+        }
+    }
+    `;
+
+
 export const getRephrases = async (text: string, apiKey: string) => {
     const openai = new OpenAI({
         apiKey,
@@ -79,21 +122,60 @@ export const getRephrases = async (text: string, apiKey: string) => {
     }
 };
 
-export const getTone = async (
-    text: string,
-    apiKey: string,
-): Promise<Revision[] | string> => {
-    // TODO: implement
-    return "ERROR";
+
+// Function to get tone adjustments
+export const getTone = async (text: string, desiredTone: string, apiKey: string) => {
+    const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
+    const userPrompt = TONE_USER_PROMPT + `${desiredTone}.\n\n${text}"`;
+
+    try {
+        const response = await openai.chat.completions.create({
+            messages: [{ role: "system", content: REPHRASE_SYSTEM_PROMPT }, { role: "user", content: userPrompt }],
+            model: "gpt-3.5-turbo",
+        });
+
+        const rawText = response.choices[0] ? response.choices[0].message.content : null;
+        if (!rawText) return "ERROR";
+        if (rawText.includes("no revisions needed")) return "no revisions needed";
+
+        const toneRevisions = JSON.parse(rawText).response;
+        const res = [];
+        for (const key in toneRevisions) res.push(toneRevisions[key]);
+        console.log("tone", res);
+        debugger;
+        return res;
+    } catch (error) {
+        console.error(error);
+        return "ERROR";
+    }
 };
 
-export const getFacts = async (
-    text: string,
-    apiKey: string,
-): Promise<Revision[] | string> => {
-    // TODO: implement
-    return "ERROR";
+
+// Function to get fact-check revisions
+export const getFacts = async (text: string, apiKey: string) => {
+    const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
+    const userPrompt = FACT_CHECK_USER_PROMPT + text + '"';
+
+    try {
+        const response = await openai.chat.completions.create({
+            messages: [{ role: "system", content: REPHRASE_SYSTEM_PROMPT }, { role: "user", content: userPrompt }],
+            model: "gpt-3.5-turbo",
+        });
+
+        const rawText = response.choices[0] ? response.choices[0].message.content : null;
+        if (!rawText) return "ERROR";
+        if (rawText.includes("no revisions needed")) return "no revisions needed";
+
+        const factRevisions = JSON.parse(rawText).response;
+        const res = [];
+        for (const key in factRevisions) res.push(factRevisions[key]);
+        return res;
+    } catch (error) {
+        console.error(error);
+        return "ERROR";
+    }
 };
+
 
 export const acceptRevision = (quill: Quill, revision: Revision) => {
     const { quote: oldText, revision: newText } = revision;
@@ -135,7 +217,7 @@ export const update = async (
     state: RevisionsState,
     dispatch: React.Dispatch<RevisionsActions> | undefined | null,
 ) => {
-    const { quill } = state;
+    const { quill, selectedTone } = state;
     if (!quill) {
         console.log("quill undefined");
         return;
@@ -159,6 +241,7 @@ export const update = async (
     if (state.enabled.tone) {
         const toneSuggestions = await getTone(
             content,
+            selectedTone ?? "neutral",
             state.apiKey,
         );
         if (typeof toneSuggestions !== "string") {

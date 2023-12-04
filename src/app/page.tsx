@@ -25,11 +25,17 @@ export type RevisionsState = {
     enabled: {
         [key in RevisionKey]: boolean;
     };
+    selectedTone?: string;
     apiKey: string;
     isLoading: boolean;
     quill?: Quill;
 };
 
+
+export type SelectToneAction = {
+    type: "selectTone";
+    tone: string;
+}
 export type AcceptSuggestionAction = {
     type: "accept";
     key: RevisionKey;
@@ -67,7 +73,8 @@ export type RevisionsActions =
     | UpdateAction
     | FinishedAction
     | UpdateKeyAction
-    | SetEnabledAction;
+    | SetEnabledAction
+    | SelectToneAction;
 
 function revisionsReducer(
     state: RevisionsState,
@@ -125,6 +132,11 @@ function revisionsReducer(
                 ...state,
                 apiKey: action.apiKey,
             };
+        case "selectTone":
+            return {
+                ...state,
+                selectedTone: action.tone,
+            }
         default:
             return state;
     }
@@ -174,13 +186,15 @@ type EditorProps = {
 type EditorState = {
     editorHtml: string;
     quillRef: React.RefObject<ReactQuill>;
+    desiredTone: string;
 };
 
 class Editor extends React.Component<EditorProps, EditorState> {
     constructor(props: EditorProps) {
         super(props);
-        this.state = { editorHtml: "", quillRef: React.createRef() };
+        this.state = { editorHtml: "", quillRef: React.createRef(), desiredTone: "" }; // Modify this line
         this.handleChange = this.handleChange.bind(this);
+        this.handleToneChange = this.handleToneChange.bind(this);
     }
 
     handleChange(html: string) {
@@ -189,6 +203,10 @@ class Editor extends React.Component<EditorProps, EditorState> {
             type: "quill",
             quill: this.state.quillRef.current?.editor,
         });
+    }
+
+    handleToneChange(e: React.ChangeEvent<HTMLInputElement>) {
+        this.setState({ desiredTone: e.target.value });
     }
 
     render() {
@@ -212,7 +230,7 @@ class Editor extends React.Component<EditorProps, EditorState> {
 }
 
 function Toolbar() {
-    const { state: { isLoading, apiKey, enabled }, dispatch } =
+    const { state: { isLoading, apiKey, enabled, selectedTone }, dispatch } =
         React.useContext(RevisionsContext) ??
         {
             state: {
@@ -280,6 +298,24 @@ function Toolbar() {
                 />
             </label>
 
+            <label>
+                <input
+                    type="text"
+                    className="!w-[400px] !h-full !py-2 !px-3 !m-0 border border-black"
+                    placeholder="Tone"
+                    hidden={!enabled.tone}
+                    value={selectedTone}
+                    onChange={(e) => {
+                        if (dispatch) {
+                            dispatch({
+                                type: "selectTone",
+                                tone: e.target.value,
+                            });
+                        }
+                    }}
+                />
+            </label>
+
             <button
                 id="update"
                 className="ql-update !w-[auto] !h-full !py-1 !px-0 !m-0"
@@ -296,6 +332,7 @@ function Toolbar() {
                     {isLoading ? "LOADING..." : "UPDATE"}
                 </div>
             </button>
+
             <label>
                 <input
                     type="text"
