@@ -10,10 +10,15 @@
     "start": "next start"
   },
   "dependencies": {
+    "@primer/octicons-react": "^19.8.0",
     "@t3-oss/env-nextjs": "^0.7.1",
     "next": "^14.0.3",
+    "openai": "^4.20.1",
+    "prop-types": "^15.8.1",
     "react": "18.2.0",
     "react-dom": "18.2.0",
+    "react-quill": "^2.0.0",
+    "react-toggle": "^4.1.3",
     "zod": "^3.22.4"
   },
   "devDependencies": {
