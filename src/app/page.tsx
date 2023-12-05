@@ -142,6 +142,11 @@ function revisionsReducer(
     }
 }
 
+const DynamicEditor = dynamic(() => import("src/editor"), {
+    ssr: false,
+    loading: () => <p>Loading...</p>,
+});
+
 export default function HomePage() {
     const [state, dispatch] = React.useReducer<typeof revisionsReducer>(
         revisionsReducer,
@@ -157,15 +162,6 @@ export default function HomePage() {
                 tone: true,
             },
         },
-    );
-
-    const DynamicEditor = React.useMemo(
-        () =>
-            dynamic(() => import("src/editor"), {
-                ssr: false,
-                loading: () => <p>Loading...</p>,
-            }),
-        [],
     );
 
     return (
