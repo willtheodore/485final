@@ -3,7 +3,7 @@
 import { useContext } from "react";
 import RevisionsContext from "./context";
 import { ArrowDownIcon } from "@primer/octicons-react";
-import { RevisionKey } from "./app/page";
+import type { RevisionKey } from "./app/page";
 
 const names = {
     rephrase: "Rephrase Suggestions",
@@ -13,8 +13,8 @@ const names = {
 
 const varStyles = {
     rephrase: "bg-red-100 hover:bg-red-200",
-    factCheck: "bg-blue-100 hover:bg-blue-200",
-    tone: "bg-green-100 hover:bg-green-200",
+    factCheck: "bg-green-100 hover:bg-green-200",
+    tone: "bg-blue-100 hover:bg-blue-200",
 };
 
 export default function Revisions({ keyword }: { keyword: RevisionKey }) {
@@ -29,7 +29,7 @@ export default function Revisions({ keyword }: { keyword: RevisionKey }) {
             <p className="border-b-2 border-black mb-2">{names[keyword]}</p>
             {currentRevisions.map((rephrase: any) => (
                 <button
-                    disabled={isLoading || revisionAccepted}
+                    disabled={(isLoading ?? false) || (revisionAccepted ?? false)}
                     onClick={() =>
                         dispatch({
                             type: "accept",

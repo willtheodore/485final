@@ -1,5 +1,5 @@
 import * as React from "react";
-import { RevisionsActions, RevisionsState } from "./app/page";
+import type { RevisionsActions, RevisionsState } from "./app/page";
 
 export interface RevisionsContextValue {
     state: RevisionsState;

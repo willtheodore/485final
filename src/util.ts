@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import {
+import type {
     Revision,
     RevisionKey,
     RevisionsActions,
