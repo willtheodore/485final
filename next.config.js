@@ -7,8 +7,6 @@ await import("./src/env.js");
 /** @type {import("next").NextConfig} */
 const config = {
     reactStrictMode: false,
-    output: "export",
-    assetPrefix: ".",
 };
 
 export default config;
