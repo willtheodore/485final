@@ -82,7 +82,6 @@ const FACT_CHECK_USER_PROMPT =
     }
     `;
 
-
 export const getRephrases = async (text: string, apiKey: string) => {
     const openai = new OpenAI({
         apiKey,
@@ -122,19 +121,27 @@ export const getRephrases = async (text: string, apiKey: string) => {
     }
 };
 
-
 // Function to get tone adjustments
-export const getTone = async (text: string, desiredTone: string, apiKey: string) => {
+export const getTone = async (
+    text: string,
+    desiredTone: string,
+    apiKey: string,
+) => {
     const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
     const userPrompt = TONE_USER_PROMPT + `${desiredTone}.\n\n${text}"`;
 
     try {
         const response = await openai.chat.completions.create({
-            messages: [{ role: "system", content: REPHRASE_SYSTEM_PROMPT }, { role: "user", content: userPrompt }],
+            messages: [{ role: "system", content: REPHRASE_SYSTEM_PROMPT }, {
+                role: "user",
+                content: userPrompt,
+            }],
             model: "gpt-3.5-turbo",
         });
 
-        const rawText = response.choices[0] ? response.choices[0].message.content : null;
+        const rawText = response.choices[0]
+            ? response.choices[0].message.content
+            : null;
         if (!rawText) return "ERROR";
         if (rawText.includes("no revisions needed")) return "no revisions needed";
 
@@ -142,14 +149,12 @@ export const getTone = async (text: string, desiredTone: string, apiKey: string)
         const res = [];
         for (const key in toneRevisions) res.push(toneRevisions[key]);
         console.log("tone", res);
-        debugger;
         return res;
     } catch (error) {
         console.error(error);
         return "ERROR";
     }
 };
-
 
 // Function to get fact-check revisions
 export const getFacts = async (text: string, apiKey: string) => {
@@ -158,11 +163,16 @@ export const getFacts = async (text: string, apiKey: string) => {
 
     try {
         const response = await openai.chat.completions.create({
-            messages: [{ role: "system", content: REPHRASE_SYSTEM_PROMPT }, { role: "user", content: userPrompt }],
+            messages: [{ role: "system", content: REPHRASE_SYSTEM_PROMPT }, {
+                role: "user",
+                content: userPrompt,
+            }],
             model: "gpt-3.5-turbo",
         });
 
-        const rawText = response.choices[0] ? response.choices[0].message.content : null;
+        const rawText = response.choices[0]
+            ? response.choices[0].message.content
+            : null;
         if (!rawText) return "ERROR";
         if (rawText.includes("no revisions needed")) return "no revisions needed";
 
@@ -176,7 +186,6 @@ export const getFacts = async (text: string, apiKey: string) => {
     }
 };
 
-
 export const acceptRevision = (quill: Quill, revision: Revision) => {
     const { quote: oldText, revision: newText } = revision;
     const content = quill.root.innerHTML;
@@ -185,6 +194,9 @@ export const acceptRevision = (quill: Quill, revision: Revision) => {
         "",
     );
     const index = plainContent.indexOf(oldText);
+
+    debugger;
+
     quill.removeFormat(index, oldText.length);
     quill.deleteText(index, oldText.length);
     quill.insertText(index, newText);

@@ -6,7 +6,7 @@ import ReactQuill from "react-quill";
 import Toggle from "react-toggle";
 import "react-quill/dist/quill.snow.css";
 import "react-toggle/style.css";
-import { acceptRevision, getRephrases, update } from "@/util";
+import { acceptRevision, update } from "@/util";
 import Quill from "quill";
 import Revisions from "@/revisions";
 import RevisionsContext from "@/context";
@@ -25,17 +25,17 @@ export type RevisionsState = {
     enabled: {
         [key in RevisionKey]: boolean;
     };
-    selectedTone?: string;
+    revisionAccepted: boolean;
+    selectedTone: string;
     apiKey: string;
     isLoading: boolean;
     quill?: Quill;
 };
 
-
 export type SelectToneAction = {
     type: "selectTone";
     tone: string;
-}
+};
 export type AcceptSuggestionAction = {
     type: "accept";
     key: RevisionKey;
@@ -98,6 +98,7 @@ function revisionsReducer(
             if (state.quill) acceptRevision(state.quill, action.revision);
             return {
                 ...state,
+                revisionAccepted: true,
                 revisions: {
                     ...state.revisions,
                     [action.key]: state.revisions[action.key]?.filter(
@@ -125,6 +126,7 @@ function revisionsReducer(
         case "finished":
             return {
                 ...state,
+                revisionAccepted: false,
                 isLoading: false,
             };
         case "updateKey":
@@ -136,7 +138,7 @@ function revisionsReducer(
             return {
                 ...state,
                 selectedTone: action.tone,
-            }
+            };
         default:
             return state;
     }
@@ -149,6 +151,8 @@ export default function HomePage() {
             isLoading: false,
             revisions: {},
             apiKey: "",
+            selectedTone: "",
+            revisionAccepted: false,
             enabled: {
                 rephrase: true,
                 factCheck: true,
@@ -161,11 +165,14 @@ export default function HomePage() {
         <main className="flex flex-col">
             <RevisionsContext.Provider value={{ state, dispatch }}>
                 <Editor placeholder="Enter text here..." dispatch={dispatch} />
-                <div className="w-full py-2 px-2 text-sm border">
+                <div className="w-full py-2 px-4 text-sm border">
+                    <p className="text-lg font-bold mb-2">Instructions</p>
                     <p>
                         We will never store your GPT API key. All requests are sent from the
                         client. Please ensure you have a secure connection before
-                        proceeding.
+                        proceeding. <br />
+                        Click update to generate suggestions. Update again after accepting a
+                        suggestion.
                     </p>
                 </div>
                 <div className="grid grid-cols-3 gap-4">
@@ -186,15 +193,16 @@ type EditorProps = {
 type EditorState = {
     editorHtml: string;
     quillRef: React.RefObject<ReactQuill>;
-    desiredTone: string;
 };
 
 class Editor extends React.Component<EditorProps, EditorState> {
     constructor(props: EditorProps) {
         super(props);
-        this.state = { editorHtml: "", quillRef: React.createRef(), desiredTone: "" }; // Modify this line
+        this.state = {
+            editorHtml: "",
+            quillRef: React.createRef(),
+        }; // Modify this line
         this.handleChange = this.handleChange.bind(this);
-        this.handleToneChange = this.handleToneChange.bind(this);
     }
 
     handleChange(html: string) {
@@ -203,10 +211,6 @@ class Editor extends React.Component<EditorProps, EditorState> {
             type: "quill",
             quill: this.state.quillRef.current?.editor,
         });
-    }
-
-    handleToneChange(e: React.ChangeEvent<HTMLInputElement>) {
-        this.setState({ desiredTone: e.target.value });
     }
 
     render() {
@@ -236,6 +240,7 @@ function Toolbar() {
             state: {
                 apiKey: "",
                 isLoading: false,
+                selectedTone: "",
                 enabled: {
                     rephrase: true,
                     factCheck: true,

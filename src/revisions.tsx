@@ -18,7 +18,8 @@ const varStyles = {
 };
 
 export default function Revisions({ keyword }: { keyword: RevisionKey }) {
-    const { state: { revisions }, dispatch } = useContext(RevisionsContext) ??
+    const { state: { revisions, isLoading, revisionAccepted }, dispatch } =
+        useContext(RevisionsContext) ??
         { state: { revisions: null }, dispatch: () => { } };
 
     const currentRevisions = revisions ? revisions[keyword] ?? [] : [];
@@ -28,6 +29,7 @@ export default function Revisions({ keyword }: { keyword: RevisionKey }) {
             <p className="border-b-2 border-black mb-2">{names[keyword]}</p>
             {currentRevisions.map((rephrase: any) => (
                 <button
+                    disabled={isLoading || revisionAccepted}
                     onClick={() =>
                         dispatch({
                             type: "accept",
