@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import ReactQuill from "react-quill";
-// @ts-expect-error
+// @ts-expect-error No declaration file
 import Toggle from "react-toggle";
 import "react-quill/dist/quill.snow.css";
 import "react-toggle/style.css";
