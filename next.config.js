@@ -8,6 +8,7 @@ await import("./src/env.js");
 const config = {
     reactStrictMode: false,
     output: "export",
+    assetPrefix: ".",
 };
 
 export default config;
