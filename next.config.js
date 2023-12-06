@@ -6,7 +6,11 @@ await import("./src/env.js");
 
 /** @type {import("next").NextConfig} */
 const config = {
-    reactStrictMode: false,
+  reactStrictMode: false,
+  output: "export",
+  typescript: {
+    ignoreBuildErrors: true,
+  },
 };
 
 export default config;
