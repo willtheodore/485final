@@ -1,12 +1,13 @@
 "use client";
 
+import type ReactQuill from "react-quill";
 import * as React from "react";
-import ReactQuill from "react-quill";
 // @ts-expect-error No declaration file
 import Toggle from "react-toggle";
 import "react-quill/dist/quill.snow.css";
 import "react-toggle/style.css";
 import RevisionsContext from "@/context";
+import dynamic from "next/dynamic";
 
 type EditorProps = {
   placeholder: string;
@@ -18,7 +19,21 @@ type EditorState = {
   quillRef: React.RefObject<ReactQuill>;
 };
 
+// Dynamically load React Quill to avoid SSR issues
+const QuillWrapper = dynamic(
+  async () => {
+    const { default: RQ } = await import("react-quill");
+    // eslint-disable-next-line react/display-name
+    return ({ ...props }) => <RQ {...props} />;
+  },
+  {
+    ssr: false,
+  },
+) as typeof ReactQuill;
+
+// Editor Component - houses the toolbar and editor
 export default class Editor extends React.Component<EditorProps, EditorState> {
+  // Store html from the editor and a reference to the Quill instance
   constructor(props: EditorProps) {
     super(props);
     this.state = {
@@ -28,6 +43,7 @@ export default class Editor extends React.Component<EditorProps, EditorState> {
     this.handleChange = this.handleChange.bind(this);
   }
 
+  // On change, update the editor contents
   handleChange(html: string) {
     this.setState({ editorHtml: html });
     this.props.dispatch({
@@ -40,7 +56,7 @@ export default class Editor extends React.Component<EditorProps, EditorState> {
     return (
       <div className="text-editor">
         <Toolbar />
-        <ReactQuill
+        <QuillWrapper
           ref={this.state.quillRef}
           onChange={this.handleChange}
           placeholder={this.props.placeholder}
@@ -56,6 +72,7 @@ export default class Editor extends React.Component<EditorProps, EditorState> {
   }
 }
 
+// Toolbar component for buttons and fields
 function Toolbar() {
   const {
     state: { isLoading, apiKey, enabled, selectedTone },

@@ -1,21 +1,24 @@
 "use client";
 
 import * as React from "react";
-import dynamic from "next/dynamic";
 import "react-quill/dist/quill.snow.css";
 import "react-toggle/style.css";
 import { acceptRevision, update } from "@/util";
 import type Quill from "quill";
 import Revisions from "./revisions";
 import RevisionsContext from "@/context";
+import Editor from "./editor";
 
+// Key for accessing revisions from each daemon
 export type RevisionKey = "rephrase" | "factCheck" | "tone";
 
+// Schema for revisions across daemons
 export interface Revision {
   quote: string;
   revision: string;
 }
 
+// State stored in a globally accessable context
 export type RevisionsState = {
   revisions: {
     [key in RevisionKey]?: Revision[];
@@ -30,35 +33,43 @@ export type RevisionsState = {
   quill?: Quill;
 };
 
+// Action for updating the selected tone
 export type SelectToneAction = {
   type: "selectTone";
   tone: string;
 };
+// Action for accepting a revision
 export type AcceptSuggestionAction = {
   type: "accept";
   key: RevisionKey;
   revision: Revision;
 };
+// Action for setting the quill instance
 export type SetQuillAction = {
   type: "quill";
   quill: Quill | undefined;
 };
+// Action for setting the revisions after an update
 export type SetRevisionsAction = {
   type: "set";
   key: RevisionKey;
   revisions: Revision[];
 };
+// Action for triggering an update
 export type UpdateAction = {
   type: "update";
   dispatch: React.Dispatch<RevisionsActions>;
 };
+// Action called when an update finishes
 export type FinishedAction = {
   type: "finished";
 };
+// Action for updating the API key
 export type UpdateKeyAction = {
   type: "updateKey";
   apiKey: string;
 };
+// Action for setting whether a daemon is enabled
 export type SetEnabledAction = {
   type: "setEnabled";
   key: RevisionKey;
@@ -74,11 +85,13 @@ export type RevisionsActions =
   | SetEnabledAction
   | SelectToneAction;
 
+// Function that handles any actions called to 'dispatch' and updates state
 function revisionsReducer(
   state: RevisionsState,
   action: RevisionsActions,
 ): RevisionsState {
   switch (action.type) {
+    // Add revisions under the specified keyword
     case "set":
       return {
         ...state,
@@ -87,11 +100,13 @@ function revisionsReducer(
           [action.key]: action.revisions,
         },
       };
+    // Add the quill instance to global state
     case "quill":
       return {
         ...state,
         quill: action.quill,
       };
+    // Format the revision and mark as accepted. Remove from list.
     case "accept":
       if (state.quill) acceptRevision(state.quill, action.revision);
       return {
@@ -104,6 +119,7 @@ function revisionsReducer(
           ),
         },
       };
+    // Set whether a daemon is enabled
     case "setEnabled":
       return {
         ...state,
@@ -112,7 +128,7 @@ function revisionsReducer(
           [action.key]: action.value,
         },
       };
-
+    // Trigger an update
     case "update":
       if (!state.isLoading) {
         update(state, action.dispatch);
@@ -121,17 +137,20 @@ function revisionsReducer(
           isLoading: true,
         };
       } else return state;
+    // Turn off loading state
     case "finished":
       return {
         ...state,
         revisionAccepted: false,
         isLoading: false,
       };
+    // Update the API key
     case "updateKey":
       return {
         ...state,
         apiKey: action.apiKey,
       };
+    // Update the selected tone
     case "selectTone":
       return {
         ...state,
@@ -143,6 +162,7 @@ function revisionsReducer(
 }
 
 export default function HomePage() {
+  // converts reducer to tracked state and dispatch function to trigger actions
   const [state, dispatch] = React.useReducer<typeof revisionsReducer>(
     revisionsReducer,
     {
@@ -158,13 +178,6 @@ export default function HomePage() {
       },
     },
   );
-
-  const Editor = React.useMemo(() => {
-    return dynamic(() => import("@/app/editor"), {
-      loading: () => <p>loading...</p>,
-      ssr: false,
-    });
-  }, []);
 
   return (
     <main className="flex flex-col">

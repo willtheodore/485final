@@ -7,6 +7,7 @@ import type {
 } from "./app/page";
 import type Quill from "quill";
 
+// Colors for the different revision types
 const FORMAT_COLORS = {
   rephrase: "#f7c8d5",
   tone: "#1313ab",
@@ -79,6 +80,7 @@ const FACT_CHECK_USER_PROMPT = `Analyze the following text for factual accuracy 
     }
     `;
 
+// Takes the text and api key. Returns a list of revisions or a string indicating an error.
 export const getRephrases = async (text: string, apiKey: string) => {
   const openai = new OpenAI({
     apiKey,
@@ -121,7 +123,7 @@ export const getRephrases = async (text: string, apiKey: string) => {
   }
 };
 
-// Function to get tone adjustments
+// Takes the text and api key. Returns a list of revisions or a string indicating an error.
 export const getTone = async (
   text: string,
   desiredTone: string,
@@ -159,7 +161,7 @@ export const getTone = async (
   }
 };
 
-// Function to get fact-check revisions
+// Takes the text and api key. Returns a list of revisions or a string indicating an error.
 export const getFacts = async (text: string, apiKey: string) => {
   const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
   const userPrompt = FACT_CHECK_USER_PROMPT + text + '"';
@@ -192,6 +194,7 @@ export const getFacts = async (text: string, apiKey: string) => {
   }
 };
 
+// Changes the text in the quill editor to reflect the accepted revision
 export const acceptRevision = (quill: Quill, revision: Revision) => {
   const { quote: oldText, revision: newText } = revision;
   const content = quill.root.innerHTML;
@@ -207,6 +210,7 @@ export const acceptRevision = (quill: Quill, revision: Revision) => {
   quill.insertText(index, newText);
 };
 
+// Changes the format in the quill editor to show the suggestions, then updates state
 export const publishRevisions = (
   quill: Quill,
   revisions: Revision[],
@@ -216,6 +220,7 @@ export const publishRevisions = (
 ) => {
   for (const suggestion of revisions) {
     const { quote } = suggestion;
+    // Strip html tags and generate newlines
     const plainContent = content
       .replace(/<\/p><p>/g, "\n")
       .replace(/<[^>]*>/g, "");
@@ -235,6 +240,7 @@ export const publishRevisions = (
       quill.formatText(index, quote.length, "underline", "true");
     }
   }
+  // Adds revisions to list
   dispatch({
     type: "set",
     key: keyword,
@@ -242,6 +248,7 @@ export const publishRevisions = (
   });
 };
 
+// Calls any enabled daemons and publishes any revisions
 export const update = async (
   state: RevisionsState,
   dispatch: React.Dispatch<RevisionsActions> | undefined | null,

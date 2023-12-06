@@ -5,12 +5,14 @@ import RevisionsContext from "../context";
 import { ArrowDownIcon } from "@primer/octicons-react";
 import type { RevisionKey } from "../app/page";
 
+// Labels above revisions
 const names = {
   rephrase: "Rephrase Suggestions",
   factCheck: "Fact Check Suggestions",
   tone: "Tone Suggestions",
 };
 
+// styles for different types of revisions
 const varStyles = {
   rephrase: "bg-red-100 hover:bg-red-200",
   factCheck: "bg-green-100 hover:bg-green-200",
@@ -18,6 +20,7 @@ const varStyles = {
 };
 
 export default function Revisions({ keyword }: { keyword: RevisionKey }) {
+  // Access global state
   const {
     state: { revisions, isLoading, revisionAccepted },
     dispatch,
